@@ -51,13 +51,13 @@ contract Reserve{
         require(msg.sender == owner);
         if (tokenAddress == token.addressToken){
             fund.token -= amount;
-            ERC20(msg.sender).transfer(msg.sender, amount);
+            ERC20(token.addressToken).transfer(msg.sender, amount);
             
-            msg.sender.transfer(amount);
+            //msg.sender.transfer(amount);
             
         }else{
             fund.eth -= amount;
-            ERC20(msg.sender).transfer(msg.sender, amount);
+            ERC20(addressEth).transfer(msg.sender, amount);
         }
     }
     
