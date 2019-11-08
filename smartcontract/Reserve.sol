@@ -47,7 +47,7 @@ contract Reserve{
         token.sellRate = _sellRate;
     }
     
-    function withdraw(address tokenAddress, uint amount) public{
+    function withdraw(address tokenAddress, uint amount) payable public{
         require(msg.sender == owner);
         if (tokenAddress == token.addressToken){
             fund.token -= amount;
@@ -79,7 +79,7 @@ contract Reserve{
         tradeFlag = value;
     }
     
-    function exchange(bool _isBuy, uint amount) public{
+    function exchange(bool _isBuy, uint amount) payable public{
         if (_isBuy){
             fund.eth += amount*token.buyRate;
             fund.token -= amount;
