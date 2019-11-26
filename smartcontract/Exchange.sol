@@ -51,51 +51,97 @@ contract Exchange{
             
             uint rateSellToSrc = reserveSrc.getExchangeRate(false);
             uint rateBuyFromDest = reserveDest.getExchangeRate(true);
-            uint rate1 = (amount*(10**18)/rateSellToSrc)*rateBuyFromDest;
+            uint rate1 = (amount/rateSellToSrc)*rateBuyFromDest;
             return rate1;
         }
         if (srcToken == addressEth){
             //swap from eth to custom token ~ buy token
             Reserve reserve =  listReserves[destToken];
-            uint rate = amount*(10**18)/reserve.getExchangeRate(true);
+            uint rate = amount/reserve.getExchangeRate(true);
             return rate;
         }
         if (destToken == addressEth){
             //swap from custom token to eth
             reserve =  listReserves[srcToken];
-            rate = amount * (10**18)*reserve.getExchangeRate(false);
+            rate = amount*reserve.getExchangeRate(false);
             return rate;
         }
     }
+
     function exchangeTokens(address srcToken, address destToken, uint amount) public payable{
         if (destToken == srcToken){
             return;
         }
+        Reserve reserveSrc = listReserves[srcToken];
+        Reserve reserveDest = listReserves[destToken];
+        uint amountTokenReturn = 0;
+        uint amountEthReturn = 0;
         if (destToken != addressEth && srcToken!= addressEth){
-            Reserve reserve1 = listReserves[srcToken];
-            uint amountEth = reserve1.exchange(false, amount);
-            reserve1 = listReserves[destToken];
-            reserve1.exchange(true, amountEth);
-            ERC20(destToken).transfer(msg.sender, amount);
+
+            ERC20(srcToken).transferFrom(msg.sender, address(this), amount);
+          
+            ERC20(srcToken).approve(reserveSrc, amount);
+            reserveSrc.exchange(false, amount);
+            amountEthReturn = amount*reserveSrc.getExchangeRate(false);
+            
+            reserveDest.exchange.value(amountEthReturn)(true, amountEthReturn);
+            amountTokenReturn = amountEthReturn/reserveDest.getExchangeRate(true);
+                
+            ERC20(destToken).transfer(msg.sender, amountTokenReturn);
+            
+            return;
         }
         if (srcToken == addressEth){
             //swap from eth to custom token
-            require((msg.value) == (amount*(10**18)));
-            Reserve reserve =  listReserves[destToken];
-            reserve.exchange(true, amount);
-            ERC20(destToken).transfer(msg.sender, amount);
+            require((msg.value) == (amount));
+            reserveDest.exchange.value(amount)(true, amount);
+            amountTokenReturn = amount/reserveDest.getExchangeRate(true);
+            ERC20(destToken).transfer(msg.sender, amountTokenReturn);
+            return;
         }
         if (destToken == addressEth){
             //swap from custom token to eth
-            reserve =  listReserves[srcToken];
-            reserve.exchange(false, amount);
-            msg.sender.transfer(amount*(10**18));  
+            ERC20(srcToken).transferFrom(msg.sender, address(this), amount);
+            ERC20(srcToken).approve(reserveSrc, amount);
+            reserveSrc.exchange(false, amount);
+            amountEthReturn = amount*reserveSrc.getExchangeRate(false);
+            msg.sender.transfer(amountEthReturn);
+            return;
         }
     }
+
+    function sendToken(address srcToken, address destToken, uint amount) payable public{
+        //must approve before
+        //take token from wallet
+        ERC20(srcToken).transferFrom(msg.sender, address(this), amount);
+        //transfer token to reserve contract
+        Reserve reserve =  listReserves[srcToken];
+        
+        ERC20(srcToken).approve(reserve, amount);
+        reserve.exchange(false, amount);
+        msg.sender.transfer(this.balance);
+        
+        
+        // ERC20(srcToken).transfer(receiveAddress, amount);
+        //reserve contract do exchange token to eth and send back
+        
+        
+        // reserve.exchange(false, amount);
+    }
+    
+    
+    function withdraw(address tokenAddress, uint amount) public onlyOwner{
+        if (tokenAddress != 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE){
+            ERC20(tokenAddress).transfer(msg.sender, amount);
+        }else{
+            msg.sender.transfer(amount);
+        }
+    }
+    
+    function () payable public {}
     
     modifier onlyOwner(){
         require(msg.sender == owner);
         _;
     }
-    event Transfer(address indexed from, address indexed to, uint tokens);
 }
