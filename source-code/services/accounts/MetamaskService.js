@@ -1,7 +1,6 @@
 export default class MetamaskService {
-  constructor(keystore) {
-    this.web3 = getWeb3Instance();
-    this.keystore = keystore;
+  constructor(web3) {
+    this.web3 = web3;
   }
 
   sendTransaction(txObject) {
