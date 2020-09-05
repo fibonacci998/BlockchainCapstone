@@ -9,7 +9,7 @@
     "bootstrap-social": "^5.1.1",
     "browserify": "^16.5.0",
     "font-awesome": "^4.7.0",
-    "jquery": "^3.4.0",
+    "jquery": "^3.5.0",
     "popper.js": "^1.12.9",
     "watchify": "^3.11.1",
     "web3": "^1.2.1"
